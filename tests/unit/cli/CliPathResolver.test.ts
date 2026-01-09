@@ -121,9 +121,9 @@ describe('CliPathResolver', () => {
       expect(binDir).toContain('yt-transcribe')
       expect(modelsDir).toContain('yt-transcribe')
 
-      // Paths should end with /bin or /models respectively
-      expect(binDir.endsWith('bin')).toBe(true)
-      expect(modelsDir.endsWith('models')).toBe(true)
+      // Paths should end with bin or models respectively
+      expect(path.basename(binDir)).toBe('bin')
+      expect(path.basename(modelsDir)).toBe('models')
     })
   })
 })
