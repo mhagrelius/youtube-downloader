@@ -13,5 +13,5 @@ export type WhisperModel = (typeof VALID_WHISPER_MODELS)[number]
  * Type guard to check if a string is a valid whisper model.
  */
 export function isValidWhisperModel(model: string): model is WhisperModel {
-  return VALID_WHISPER_MODELS.includes(model as WhisperModel)
+  return (VALID_WHISPER_MODELS as readonly string[]).includes(model)
 }
