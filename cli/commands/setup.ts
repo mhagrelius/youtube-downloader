@@ -150,7 +150,7 @@ export async function setupCommand(options: SetupOptions): Promise<void> {
 
     if (!modelStatus.ready) {
       reporter.phase(`Downloading whisper model (${modelName})...`)
-      await binaryManager.downloadWhisperModel(modelName, onProgress)
+      await binaryManager.downloadWhisperModel(modelName)
       reporter.complete(`Whisper model '${modelName}' installed`)
     } else {
       reporter.info(`Whisper model '${modelName}' already downloaded`)
