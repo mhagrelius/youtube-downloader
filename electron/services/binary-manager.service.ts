@@ -514,7 +514,9 @@ class BinaryManager extends EventEmitter {
     // FFmpeg ZIP from BtbN has structure: ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe
     // Find the extracted directory and move binaries to binDir
     const entries = fs.readdirSync(this.binDir)
-    const ffmpegDir = entries.find((e) => e.startsWith('ffmpeg-') && fs.statSync(path.join(this.binDir, e)).isDirectory())
+    const ffmpegDir = entries.find(
+      (e) => e.startsWith('ffmpeg-') && fs.statSync(path.join(this.binDir, e)).isDirectory()
+    )
 
     if (ffmpegDir) {
       const binPath = path.join(this.binDir, ffmpegDir, 'bin')

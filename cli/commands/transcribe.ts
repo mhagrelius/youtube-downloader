@@ -64,17 +64,11 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
   const status = await binaryManager.checkBinaryStatus()
 
   if (!status.ytdlp.exists || !status.ytdlp.executable) {
-    throw new CliError(
-      'yt-dlp not found. Run: yt-transcribe --setup',
-      ExitCode.BinaryNotFound
-    )
+    throw new CliError('yt-dlp not found. Run: yt-transcribe --setup', ExitCode.BinaryNotFound)
   }
 
   if (!status.deno.exists || !status.deno.executable) {
-    throw new CliError(
-      'deno not found. Run: yt-transcribe --setup',
-      ExitCode.BinaryNotFound
-    )
+    throw new CliError('deno not found. Run: yt-transcribe --setup', ExitCode.BinaryNotFound)
   }
 
   // Check whisper and model
