@@ -50,7 +50,7 @@ export function extractVideoId(url: string): string | null {
   if (shortMatch) return shortMatch[1]
 
   // youtube.com/watch?v=VIDEO_ID (handles query params in any order)
-  const watchMatch = trimmed.match(/youtube\.com\/watch\?.*[?&]?v=([\w-]{11})/)
+  const watchMatch = trimmed.match(/youtube\.com\/watch\?(?:.*&)?v=([\w-]{11})/)
   if (watchMatch) return watchMatch[1]
 
   // youtube.com/embed/VIDEO_ID
