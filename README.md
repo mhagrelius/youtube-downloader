@@ -12,8 +12,8 @@ A modern desktop application for downloading YouTube videos with a beautiful UI.
 
 ## Platform Support
 
-- **Windows (x64)** - Primary, tested
-- macOS (Intel & Apple Silicon) - Untested
+- **Windows (x64)** - untested
+- macOS (Intel & Apple Silicon) - Primary, Apple Silicon tested
 - Linux (x64, arm64) - Untested
 
 ## Installation
