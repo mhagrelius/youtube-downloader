@@ -77,6 +77,15 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
     )
   }
 
+  // Validate model name against allowlist
+  const validModels = ['tiny', 'base', 'small', 'medium']
+  if (!validModels.includes(options.model)) {
+    throw new CliError(
+      `Invalid model: ${options.model}. Valid models: ${validModels.join(', ')}`,
+      ExitCode.InvalidArguments
+    )
+  }
+
   // Check whisper and model
   try {
     reporter.debug(`Ensuring whisper model '${options.model}' is ready...`)
