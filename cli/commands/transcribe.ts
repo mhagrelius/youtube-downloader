@@ -181,6 +181,16 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
       const audioOutputDir = options.audioOutput || process.cwd()
       const destAudioPath = path.join(audioOutputDir, path.basename(audioFile))
 
+      // Validate the final destination path
+      try {
+        validateOutputPath(destAudioPath, 'audio destination')
+      } catch (error) {
+        throw new CliError(
+          error instanceof Error ? error.message : 'Invalid audio destination path',
+          ExitCode.InvalidArguments
+        )
+      }
+
       if (!fs.existsSync(audioOutputDir)) {
         fs.mkdirSync(audioOutputDir, { recursive: true })
       }
