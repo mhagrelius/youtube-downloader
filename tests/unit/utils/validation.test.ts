@@ -174,6 +174,18 @@ describe('validation utilities', () => {
       )
     })
 
+    it('extracts from watch URL when v= is not the first query param', () => {
+      expect(extractVideoId('https://www.youtube.com/watch?t=120&v=jNQXAC9IVRw')).toBe(
+        'jNQXAC9IVRw'
+      )
+      expect(extractVideoId('https://www.youtube.com/watch?feature=share&v=jNQXAC9IVRw')).toBe(
+        'jNQXAC9IVRw'
+      )
+      expect(
+        extractVideoId('https://www.youtube.com/watch?si=abcd1234&list=PLtest&v=jNQXAC9IVRw')
+      ).toBe('jNQXAC9IVRw')
+    })
+
     it('handles IDs with hyphens and underscores', () => {
       expect(extractVideoId('https://youtu.be/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
       expect(extractVideoId('https://youtu.be/_test-ID_12')).toBe('_test-ID_12')
