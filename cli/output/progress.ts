@@ -1,5 +1,9 @@
-import type { DownloadProgress } from '../../shared/types.js'
+import type { DownloadProgress as YtdlpDownloadProgress } from '../../shared/types.js'
+import type { DownloadProgress as BinaryDownloadProgress } from '../../electron/services/binary-manager.service.js'
 import type { TranscriptionProgress } from '../../electron/services/transcription.service.js'
+
+// Union type to handle both download progress types
+type DownloadProgress = YtdlpDownloadProgress | BinaryDownloadProgress
 
 export interface ProgressOptions {
   quiet: boolean
@@ -50,7 +54,8 @@ export class ProgressReporter {
       this.writeJson({ type: 'download_progress', ...progress })
     } else {
       const bar = this.progressBar(progress.percent)
-      const speedStr = progress.speed || '...'
+      // Handle both progress types: ytdlp (has speed) and binary manager (no speed)
+      const speedStr = 'speed' in progress ? progress.speed : '...'
       const line = `  ${bar} ${progress.percent.toFixed(1).padStart(5)}% | ${speedStr}`
       this.writeInPlace(line)
     }
