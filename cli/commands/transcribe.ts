@@ -45,17 +45,6 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
     }
   }
 
-  if (options.audioOutput) {
-    try {
-      validateOutputPath(options.audioOutput, 'audio output directory')
-    } catch (error) {
-      throw new CliError(
-        error instanceof Error ? error.message : 'Invalid audio output path',
-        ExitCode.InvalidArguments
-      )
-    }
-  }
-
   // Create binary manager with CLI paths
   const binaryManager = createBinaryManager(pathResolver)
 
@@ -180,6 +169,16 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
     if (options.keepAudio && audioFile) {
       const audioOutputDir = options.audioOutput || process.cwd()
       const destAudioPath = path.join(audioOutputDir, path.basename(audioFile))
+
+      // Validate the final destination path
+      try {
+        validateOutputPath(destAudioPath, 'audio output file')
+      } catch (error) {
+        throw new CliError(
+          error instanceof Error ? error.message : 'Invalid audio output path',
+          ExitCode.InvalidArguments
+        )
+      }
 
       if (!fs.existsSync(audioOutputDir)) {
         fs.mkdirSync(audioOutputDir, { recursive: true })
