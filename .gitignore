@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+dist-types/
+release/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test outputs
+playwright-report/
+test-results/
+coverage/
+
+# Runtime binaries (downloaded at runtime)
+resources/bin/
+resources/models/
+
+# Logs
+*.log
