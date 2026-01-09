@@ -41,13 +41,19 @@ export default tseslint.config(
     },
   },
   {
+    files: ['cli/**/*.ts'],
+    rules: {
+      'no-console': 'off', // Allow console in CLI
+    },
+  },
+  {
     files: ['tests/**/*.ts', 'tests/**/*.tsx', 'e2e/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off', // Allow any in tests
     },
   },
   {
-    ignores: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**', 'dist-types/**'],
+    ignores: ['dist/**', 'dist-electron/**', 'dist-cli/**', 'cli/dist/**', 'release/**', 'node_modules/**', 'dist-types/**', 'scripts/**'],
   },
   prettierConfig
 )

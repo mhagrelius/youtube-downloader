@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import https from 'https'
@@ -6,6 +5,7 @@ import http from 'http'
 import { createWriteStream } from 'fs'
 import { spawn } from 'child_process'
 import { EventEmitter } from 'events'
+import type { PathResolver } from '../../shared/services/paths.js'
 
 export interface BinaryInfo {
   name: string
@@ -122,34 +122,12 @@ const WHISPER_MODEL_URLS: Record<string, string> = {
 
 class BinaryManager extends EventEmitter {
   private binDir: string
+  private pathResolver: PathResolver
 
-  constructor() {
+  constructor(pathResolver: PathResolver) {
     super()
-    // In development, use resources/bin. In production, use userData/bin
-    const isDev = !app.isPackaged
-
-    if (isDev) {
-      // Try multiple possible locations for dev binaries
-      const possibleDevPaths = [
-        path.join(process.cwd(), 'resources', 'bin'),
-        // When running from dist-electron, go up one level
-        path.join(app.getAppPath(), '..', 'resources', 'bin'),
-        // Fallback to app path based resolution
-        path.join(path.dirname(app.getAppPath()), 'resources', 'bin'),
-      ]
-
-      // Find the first path that exists
-      let foundPath = possibleDevPaths[0]
-      for (const devPath of possibleDevPaths) {
-        if (fs.existsSync(devPath)) {
-          foundPath = devPath
-          break
-        }
-      }
-      this.binDir = foundPath
-    } else {
-      this.binDir = path.join(app.getPath('userData'), 'bin')
-    }
+    this.pathResolver = pathResolver
+    this.binDir = pathResolver.getBinDir()
   }
 
   getBinDir(): string {
@@ -243,11 +221,7 @@ class BinaryManager extends EventEmitter {
   }
 
   getModelsDir(): string {
-    const isDev = !app.isPackaged
-    if (isDev) {
-      return path.join(process.cwd(), 'resources', 'models')
-    }
-    return path.join(app.getPath('userData'), 'models')
+    return this.pathResolver.getModelsDir()
   }
 
   getWhisperModelPath(modelName: string = 'small'): string {
@@ -722,14 +696,58 @@ class BinaryManager extends EventEmitter {
   }
 }
 
-// Singleton instance
+// Singleton instance for Electron context
 let binaryManagerInstance: BinaryManager | null = null
 
+// Path resolver for Electron context (set by main.ts)
+let electronPathResolver: PathResolver | null = null
+
+/**
+ * Set the Electron path resolver. Must be called from main.ts before any
+ * service imports that use getBinaryManager().
+ *
+ * @example
+ * // In electron/main.ts (before any other imports)
+ * setElectronPathResolver(getElectronPathResolver())
+ */
+export function setElectronPathResolver(resolver: PathResolver): void {
+  electronPathResolver = resolver
+}
+
+/**
+ * Get the Electron binary manager singleton.
+ *
+ * **Electron only** - For CLI/non-Electron contexts, use createBinaryManager() instead.
+ *
+ * Requires setElectronPathResolver() to be called first (typically in main.ts).
+ * This singleton pattern ensures all Electron services share the same BinaryManager instance.
+ *
+ * @throws Error if setElectronPathResolver() was not called first
+ */
 export function getBinaryManager(): BinaryManager {
   if (!binaryManagerInstance) {
-    binaryManagerInstance = new BinaryManager()
+    if (!electronPathResolver) {
+      throw new Error(
+        'BinaryManager not initialized. Call setElectronPathResolver() in main.ts before importing services.'
+      )
+    }
+    binaryManagerInstance = new BinaryManager(electronPathResolver)
   }
   return binaryManagerInstance
+}
+
+/**
+ * Create a new BinaryManager instance with a custom path resolver.
+ *
+ * **CLI/non-Electron contexts** - Use this to create standalone BinaryManager instances
+ * that don't share state with Electron's singleton.
+ *
+ * @example
+ * // In CLI code
+ * const binaryManager = createBinaryManager(getCliPathResolver())
+ */
+export function createBinaryManager(pathResolver: PathResolver): BinaryManager {
+  return new BinaryManager(pathResolver)
 }
 
 export { BinaryManager }
