@@ -286,7 +286,11 @@ async function main(): Promise<void> {
         'Invalid YouTube URL. Supported formats:\n' +
           '  - https://youtube.com/watch?v=VIDEO_ID\n' +
           '  - https://youtu.be/VIDEO_ID\n' +
-          '  - https://youtube.com/shorts/VIDEO_ID',
+          '  - https://youtube.com/shorts/VIDEO_ID\n' +
+          '  - https://youtube.com/embed/VIDEO_ID\n' +
+          '  - https://youtube.com/v/VIDEO_ID\n' +
+          '  - https://youtube.com/playlist?list=PLAYLIST_ID\n' +
+          '  - https://youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID',
         ExitCode.InvalidArguments
       )
     }

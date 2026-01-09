@@ -144,7 +144,10 @@ export async function getVideoInfo(url: string, binaryManager: BinaryManager): P
   })
 }
 
-export async function getPlaylistInfo(url: string, binaryManager: BinaryManager): Promise<PlaylistInfo> {
+export async function getPlaylistInfo(
+  url: string,
+  binaryManager: BinaryManager
+): Promise<PlaylistInfo> {
   return new Promise((resolve, reject) => {
     const ytdlpPath = binaryManager.getYtDlpPath()
     const denoPath = binaryManager.getDenoPath()

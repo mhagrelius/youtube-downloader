@@ -43,9 +43,7 @@ describe('CLI Path Validation', () => {
       const home = os.homedir()
 
       // Path with . and ..
-      expect(
-        isPathWithinAllowed(path.join(home, 'subdir', '..', 'file.txt'), [home])
-      ).toBe(true)
+      expect(isPathWithinAllowed(path.join(home, 'subdir', '..', 'file.txt'), [home])).toBe(true)
     })
 
     it('should prevent prefix attacks', async () => {
@@ -103,12 +101,8 @@ describe('CLI Path Validation', () => {
 
       // Even if the resolved path would be within allowed dirs, reject paths with ..
       // Use string concatenation to avoid path.join normalizing out the ..
-      expect(() => validateOutputPath('/home/user/../user/file.txt')).toThrow(
-        'directory traversal'
-      )
-      expect(() => validateOutputPath('./subdir/../file.txt')).toThrow(
-        'directory traversal'
-      )
+      expect(() => validateOutputPath('/home/user/../user/file.txt')).toThrow('directory traversal')
+      expect(() => validateOutputPath('./subdir/../file.txt')).toThrow('directory traversal')
     })
 
     it('should include description in error message', async () => {
