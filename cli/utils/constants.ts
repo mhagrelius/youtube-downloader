@@ -8,3 +8,10 @@
 export const VALID_WHISPER_MODELS = ['tiny', 'base', 'small', 'medium'] as const
 
 export type WhisperModel = (typeof VALID_WHISPER_MODELS)[number]
+
+/**
+ * Type guard to check if a string is a valid whisper model.
+ */
+export function isValidWhisperModel(model: string): model is WhisperModel {
+  return VALID_WHISPER_MODELS.includes(model as WhisperModel)
+}

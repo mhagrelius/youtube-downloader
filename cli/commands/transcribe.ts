@@ -7,7 +7,7 @@ import { getCliPathResolver } from '../utils/paths.js'
 import { validateOutputPath } from '../utils/validation.js'
 import { ProgressReporter, type ProgressOptions } from '../output/progress.js'
 import { CliError, ExitCode } from '../utils/errors.js'
-import { VALID_WHISPER_MODELS } from '../utils/constants.js'
+import { VALID_WHISPER_MODELS, isValidWhisperModel } from '../utils/constants.js'
 import type { DownloadProgress } from '../../shared/types.js'
 import type { TranscriptionProgress } from '../../electron/services/transcription.service.js'
 
@@ -79,7 +79,7 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
   }
 
   // Validate model name against allowlist
-  if (!VALID_WHISPER_MODELS.includes(options.model as any)) {
+  if (!isValidWhisperModel(options.model)) {
     throw new CliError(
       `Invalid model: ${options.model}. Valid models: ${VALID_WHISPER_MODELS.join(', ')}`,
       ExitCode.InvalidArguments

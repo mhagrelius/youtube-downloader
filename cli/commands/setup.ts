@@ -7,7 +7,7 @@ import {
 import { getCliPathResolver } from '../utils/paths.js'
 import { ProgressReporter, type ProgressOptions } from '../output/progress.js'
 import { CliError, ExitCode } from '../utils/errors.js'
-import { VALID_WHISPER_MODELS } from '../utils/constants.js'
+import { VALID_WHISPER_MODELS, isValidWhisperModel } from '../utils/constants.js'
 
 export interface SetupOptions extends ProgressOptions {
   downloadModel?: string
@@ -173,7 +173,7 @@ export async function downloadModelCommand(
   const reporter = new ProgressReporter(options)
   const binaryManager = getCliBinaryManager()
 
-  if (!VALID_WHISPER_MODELS.includes(modelName as any)) {
+  if (!isValidWhisperModel(modelName)) {
     throw new CliError(
       `Invalid model: ${modelName}. Valid models: ${VALID_WHISPER_MODELS.join(', ')}`,
       ExitCode.InvalidArguments
