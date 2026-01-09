@@ -168,17 +168,18 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
     // Keep audio if requested
     if (options.keepAudio && audioFile) {
       const audioOutputDir = options.audioOutput || process.cwd()
-      const destAudioPath = path.join(audioOutputDir, path.basename(audioFile))
-
-      // Validate the final destination path
+      
+      // Validate the audio output directory before using it
       try {
-        validateOutputPath(destAudioPath, 'audio output file')
+        validateOutputPath(audioOutputDir, 'audio output directory')
       } catch (error) {
         throw new CliError(
           error instanceof Error ? error.message : 'Invalid audio output path',
           ExitCode.InvalidArguments
         )
       }
+
+      const destAudioPath = path.join(audioOutputDir, path.basename(audioFile))
 
       if (!fs.existsSync(audioOutputDir)) {
         fs.mkdirSync(audioOutputDir, { recursive: true })
