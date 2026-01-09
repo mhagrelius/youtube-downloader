@@ -23,6 +23,20 @@ export interface TranscribeOptions extends ProgressOptions {
 }
 
 /**
+ * Helper function to validate a path and throw a CliError if invalid
+ */
+function validatePathWithError(pathToValidate: string, description: string): void {
+  try {
+    validateOutputPath(pathToValidate, description)
+  } catch (error) {
+    throw new CliError(
+      error instanceof Error ? error.message : `Invalid ${description}`,
+      ExitCode.InvalidArguments
+    )
+  }
+}
+
+/**
  * Main transcription workflow:
  * 1. Initialize binary manager with CLI paths
  * 2. Download audio from URL
@@ -35,25 +49,11 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
 
   // Validate output paths before doing any work
   if (options.output) {
-    try {
-      validateOutputPath(options.output, 'output file')
-    } catch (error) {
-      throw new CliError(
-        error instanceof Error ? error.message : 'Invalid output path',
-        ExitCode.InvalidArguments
-      )
-    }
+    validatePathWithError(options.output, 'output file')
   }
 
   if (options.audioOutput) {
-    try {
-      validateOutputPath(options.audioOutput, 'audio output directory')
-    } catch (error) {
-      throw new CliError(
-        error instanceof Error ? error.message : 'Invalid audio output path',
-        ExitCode.InvalidArguments
-      )
-    }
+    validatePathWithError(options.audioOutput, 'audio output directory')
   }
 
   // Create binary manager with CLI paths
@@ -182,14 +182,7 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
       const destAudioPath = path.join(audioOutputDir, path.basename(audioFile))
 
       // Validate the final destination path
-      try {
-        validateOutputPath(destAudioPath, 'audio destination')
-      } catch (error) {
-        throw new CliError(
-          error instanceof Error ? error.message : 'Invalid audio destination path',
-          ExitCode.InvalidArguments
-        )
-      }
+      validatePathWithError(destAudioPath, 'audio destination')
 
       if (!fs.existsSync(audioOutputDir)) {
         fs.mkdirSync(audioOutputDir, { recursive: true })
