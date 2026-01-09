@@ -1,12 +1,11 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import {
-  getBinaryManager,
+  BinaryManager,
   BinaryStatus,
   DownloadProgress,
 } from '../services/binary-manager.service'
 
-export function registerBinaryIPC(): void {
-  const binaryManager = getBinaryManager()
+export function registerBinaryIPC(binaryManager: BinaryManager): void {
 
   // Check binary status
   ipcMain.handle(

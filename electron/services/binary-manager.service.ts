@@ -696,53 +696,13 @@ class BinaryManager extends EventEmitter {
   }
 }
 
-// Singleton instance for Electron context
-let binaryManagerInstance: BinaryManager | null = null
-
-// Path resolver for Electron context (set by main.ts)
-let electronPathResolver: PathResolver | null = null
-
 /**
- * Set the Electron path resolver. Must be called from main.ts before any
- * service imports that use getBinaryManager().
+ * Create a BinaryManager instance with a path resolver.
  *
  * @example
- * // In electron/main.ts (before any other imports)
- * setElectronPathResolver(getElectronPathResolver())
- */
-export function setElectronPathResolver(resolver: PathResolver): void {
-  electronPathResolver = resolver
-}
-
-/**
- * Get the Electron binary manager singleton.
+ * // In Electron main.ts
+ * const binaryManager = createBinaryManager(getElectronPathResolver())
  *
- * **Electron only** - For CLI/non-Electron contexts, use createBinaryManager() instead.
- *
- * Requires setElectronPathResolver() to be called first (typically in main.ts).
- * This singleton pattern ensures all Electron services share the same BinaryManager instance.
- *
- * @throws Error if setElectronPathResolver() was not called first
- */
-export function getBinaryManager(): BinaryManager {
-  if (!binaryManagerInstance) {
-    if (!electronPathResolver) {
-      throw new Error(
-        'BinaryManager not initialized. Call setElectronPathResolver() in main.ts before importing services.'
-      )
-    }
-    binaryManagerInstance = new BinaryManager(electronPathResolver)
-  }
-  return binaryManagerInstance
-}
-
-/**
- * Create a new BinaryManager instance with a custom path resolver.
- *
- * **CLI/non-Electron contexts** - Use this to create standalone BinaryManager instances
- * that don't share state with Electron's singleton.
- *
- * @example
  * // In CLI code
  * const binaryManager = createBinaryManager(getCliPathResolver())
  */

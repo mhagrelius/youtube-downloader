@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 import { EventEmitter } from 'events'
-import { getBinaryManager } from './binary-manager.service'
+import { BinaryManager } from './binary-manager.service'
 
 // Debug logger - opt-in by creating ~/.youtube-downloader-debug
 const DEBUG_FLAG = path.join(os.homedir(), '.youtube-downloader-debug')
@@ -36,18 +36,16 @@ export interface TranscriptionResult {
   duration?: number
 }
 
-function getWhisperPath(): string {
-  return getBinaryManager().getWhisperPath()
-}
-
-function getModelPath(modelName: string = 'small'): string {
-  return getBinaryManager().getWhisperModelPath(modelName)
-}
-
 export class Transcriber extends EventEmitter {
   private process: ChildProcess | null = null
   private totalDuration: number = 0
   private tempWavFile: string | null = null
+  private binaryManager: BinaryManager
+
+  constructor(binaryManager: BinaryManager) {
+    super()
+    this.binaryManager = binaryManager
+  }
 
   async transcribe(options: TranscriptionOptions): Promise<TranscriptionResult> {
     log('Starting transcription for:', options.audioFile)
@@ -77,8 +75,8 @@ export class Transcriber extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      const whisperPath = getWhisperPath()
-      const modelPath = getModelPath(options.modelName)
+      const whisperPath = this.binaryManager.getWhisperPath()
+      const modelPath = this.binaryManager.getWhisperModelPath(options.modelName)
 
       log('Whisper path:', whisperPath)
       log('Model path:', modelPath)
@@ -275,7 +273,7 @@ export class Transcriber extends EventEmitter {
     // Try to get duration using ffprobe if available
     // Otherwise estimate based on file size (rough approximation)
     return new Promise((resolve) => {
-      const ffprobePath = getBinaryManager().getFFprobePath()
+      const ffprobePath = this.binaryManager.getFFprobePath()
       const ffprobe = spawn(ffprobePath, [
         '-v',
         'error',
@@ -336,7 +334,7 @@ export class Transcriber extends EventEmitter {
     return new Promise((resolve, reject) => {
       // Create temp wav file path
       const wavFile = audioFile.replace(/\.[^.]+$/, '.wav')
-      const ffmpegPath = getBinaryManager().getFFmpegPath()
+      const ffmpegPath = this.binaryManager.getFFmpegPath()
       log('Converting', audioFile, 'to', wavFile, 'using', ffmpegPath)
 
       const ffmpeg = spawn(ffmpegPath, [
@@ -400,6 +398,6 @@ export class Transcriber extends EventEmitter {
   }
 }
 
-export function createTranscriber(): Transcriber {
-  return new Transcriber()
+export function createTranscriber(binaryManager: BinaryManager): Transcriber {
+  return new Transcriber(binaryManager)
 }

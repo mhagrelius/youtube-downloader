@@ -113,7 +113,7 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
   try {
     // Download audio
     reporter.phase('Downloading audio...')
-    const downloader = new Downloader()
+    const downloader = new Downloader(binaryManager)
 
     downloader.on('progress', (progress: DownloadProgress) => {
       reporter.downloadProgress(progress)
@@ -131,7 +131,7 @@ export async function transcribeCommand(options: TranscribeOptions): Promise<voi
 
     // Transcribe
     reporter.phase('Transcribing...')
-    const transcriber = new Transcriber()
+    const transcriber = new Transcriber(binaryManager)
 
     transcriber.on('progress', (progress: TranscriptionProgress) => {
       reporter.transcriptionProgress(progress)

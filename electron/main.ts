@@ -6,7 +6,7 @@ import { registerSettingsIPC } from './ipc/settings.ipc'
 import { registerBinaryIPC } from './ipc/binary.ipc'
 import { registerTranscriptionIPC } from './ipc/transcription.ipc'
 import { getDatabase, closeDatabase } from './services/database.service'
-import { setElectronPathResolver } from './services/binary-manager.service'
+import { createBinaryManager } from './services/binary-manager.service'
 import { getElectronPathResolver } from './services/electron-paths'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -15,17 +15,17 @@ const __dirname = path.dirname(__filename)
 let mainWindow: BrowserWindow | null = null
 
 function initializeApp() {
-  // Initialize binary manager with Electron paths (must be before any IPC handlers)
-  setElectronPathResolver(getElectronPathResolver())
+  // Create binary manager with Electron paths
+  const binaryManager = createBinaryManager(getElectronPathResolver())
 
   // Initialize database
   getDatabase()
 
-  // Register IPC handlers
-  registerDownloadIPC()
+  // Register IPC handlers with shared binary manager
+  registerDownloadIPC(binaryManager)
   registerSettingsIPC()
-  registerBinaryIPC()
-  registerTranscriptionIPC()
+  registerBinaryIPC(binaryManager)
+  registerTranscriptionIPC(binaryManager)
 }
 
 function createWindow() {

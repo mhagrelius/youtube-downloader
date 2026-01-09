@@ -6,16 +6,16 @@ import {
   TranscriptionProgress,
   TranscriptionResult,
 } from '../services/transcription.service'
-import { getBinaryManager } from '../services/binary-manager.service'
+import { BinaryManager } from '../services/binary-manager.service'
 
 // Store active transcriptions by ID
 const activeTranscriptions = new Map<string, Transcriber>()
 
-export function registerTranscriptionIPC(): void {
+export function registerTranscriptionIPC(binaryManager: BinaryManager): void {
   // Check whisper model status
   ipcMain.handle('transcription:getModelStatus', async (_event, modelName: string = 'small') => {
     try {
-      const status = await getBinaryManager().checkWhisperModelStatus(modelName)
+      const status = await binaryManager.checkWhisperModelStatus(modelName)
       return { success: true, data: status }
     } catch (error) {
       return {
@@ -28,7 +28,7 @@ export function registerTranscriptionIPC(): void {
   // Check whisper binary status
   ipcMain.handle('transcription:getBinaryStatus', async () => {
     try {
-      const status = await getBinaryManager().checkBinaryStatus()
+      const status = await binaryManager.checkBinaryStatus()
       return {
         success: true,
         data: {
@@ -50,7 +50,6 @@ export function registerTranscriptionIPC(): void {
   ipcMain.handle('transcription:downloadBinary', async (event) => {
     try {
       const window = BrowserWindow.fromWebContents(event.sender)
-      const binaryManager = getBinaryManager()
 
       // Set up progress listener
       const progressHandler = (progress: {
@@ -82,7 +81,6 @@ export function registerTranscriptionIPC(): void {
   ipcMain.handle('transcription:downloadModel', async (event, modelName: string = 'small') => {
     try {
       const window = BrowserWindow.fromWebContents(event.sender)
-      const binaryManager = getBinaryManager()
 
       // Set up progress listener
       const progressHandler = (progress: {
@@ -114,7 +112,6 @@ export function registerTranscriptionIPC(): void {
   ipcMain.handle('transcription:ensureReady', async (event, modelName: string = 'small') => {
     try {
       const window = BrowserWindow.fromWebContents(event.sender)
-      const binaryManager = getBinaryManager()
 
       // Set up progress listener
       const progressHandler = (progress: {
@@ -147,7 +144,7 @@ export function registerTranscriptionIPC(): void {
     'transcription:start',
     async (event, transcriptionId: string, options: TranscriptionOptions) => {
       try {
-        const transcriber = createTranscriber()
+        const transcriber = createTranscriber(binaryManager)
         activeTranscriptions.set(transcriptionId, transcriber)
 
         const window = BrowserWindow.fromWebContents(event.sender)
