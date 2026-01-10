@@ -33,7 +33,24 @@ export class ElectronPathResolver implements PathResolver {
         }
       }
       this.binDir = foundPath
+
+      // Warn if binDir doesn't exist - indicates resources may not be initialized
+      if (!fs.existsSync(this.binDir)) {
+        console.warn(
+          `[ElectronPathResolver] Development binaries directory does not exist: ${this.binDir}. ` +
+            'Binary operations may fail until the directory is created and populated.'
+        )
+      }
+
       this.modelsDir = path.join(process.cwd(), 'resources', 'models')
+
+      // Warn if modelsDir doesn't exist - indicates resources may not be initialized
+      if (!fs.existsSync(this.modelsDir)) {
+        console.warn(
+          `[ElectronPathResolver] Development models directory does not exist: ${this.modelsDir}. ` +
+            'Transcription operations may fail until the directory is created and populated.'
+        )
+      }
     } else {
       this.binDir = path.join(app.getPath('userData'), 'bin')
       this.modelsDir = path.join(app.getPath('userData'), 'models')

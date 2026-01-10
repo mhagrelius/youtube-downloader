@@ -14,9 +14,7 @@ export class CliPathResolver implements PathResolver {
   private dataDir: string
 
   constructor() {
-    this.dataDir =
-      process.env.YT_TRANSCRIBE_DATA_DIR ||
-      path.join(this.getAppDataDir(), APP_NAME)
+    this.dataDir = process.env.YT_TRANSCRIBE_DATA_DIR || path.join(this.getAppDataDir(), APP_NAME)
   }
 
   private getAppDataDir(): string {

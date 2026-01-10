@@ -11,7 +11,7 @@ const LOG_FILE = path.join(os.homedir(), 'youtube-downloader-transcription.log')
 function log(...args: unknown[]): void {
   if (!fs.existsSync(DEBUG_FLAG)) return
   const timestamp = new Date().toISOString()
-  const message = `[${timestamp}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')}\n`
+  const message = `[${timestamp}] ${args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')}\n`
   fs.appendFileSync(LOG_FILE, message)
 }
 

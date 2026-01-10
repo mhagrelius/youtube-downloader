@@ -24,11 +24,7 @@ export function isPathWithinAllowed(filePath: string, allowedBasePaths: string[]
  */
 export function getCliSafePaths(): string[] {
   const home = os.homedir()
-  const paths = [
-    home,
-    os.tmpdir(),
-    process.cwd(),
-  ]
+  const paths = [home, os.tmpdir(), process.cwd()]
 
   // Add platform-specific paths
   if (process.platform === 'darwin') {
@@ -64,9 +60,7 @@ export function validateOutputPath(outputPath: string, description: string = 'ou
   // Check for directory traversal patterns in the ORIGINAL input
   // This catches attempts to use .. even if they would resolve to a valid path
   if (outputPath.includes('..')) {
-    throw new Error(
-      `Invalid ${description}: path contains directory traversal (..)`
-    )
+    throw new Error(`Invalid ${description}: path contains directory traversal (..)`)
   }
 
   const resolvedPath = path.resolve(outputPath)
