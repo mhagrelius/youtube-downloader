@@ -128,17 +128,13 @@ export async function setupCommand(options: SetupOptions): Promise<void> {
 
     // Check whisper
     if (!status.whisper.exists || !status.whisper.executable) {
-      if (process.platform === 'win32') {
+      if (process.platform === 'win32' || process.platform === 'linux') {
         reporter.phase('Downloading whisper...')
         await binaryManager.downloadBinary('whisper')
         reporter.complete('whisper installed')
       } else {
-        reporter.warn(
-          'Whisper not found. Install via: ' +
-            (process.platform === 'darwin'
-              ? 'brew install whisper-cpp'
-              : 'your package manager or build from source')
-        )
+        // macOS - use system-installed whisper-cpp via Homebrew
+        reporter.warn('Whisper not found. Install via: brew install whisper-cpp')
       }
     } else {
       reporter.info(`whisper already installed: ${status.whisper.version || 'found'}`)
