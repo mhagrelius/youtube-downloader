@@ -89,8 +89,7 @@ const BINARY_URLS: Record<string, Record<PlatformKey, Record<ArchKey, string>>> 
         'https://github.com/ggerganov/whisper.cpp/releases/latest/download/whisper-bin-x64.zip',
     },
     linux: {
-      // No pre-built binaries for Linux - use system-installed whisper-cpp
-      x64: '',
+      x64: 'https://github.com/mhagrelius/youtube-downloader/releases/download/whisper-v1.8.2/whisper-linux-x64.zip',
       arm64: '',
     },
   },
@@ -123,6 +122,7 @@ const WHISPER_MODEL_URLS: Record<string, string> = {
 class BinaryManager extends EventEmitter {
   private binDir: string
   private pathResolver: PathResolver
+  private downloadInProgress: Promise<void> | null = null
 
   constructor(pathResolver: PathResolver) {
     super()
@@ -422,61 +422,96 @@ class BinaryManager extends EventEmitter {
   }
 
   private async downloadFile(name: string, url: string, destPath: string): Promise<void> {
+    const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes timeout
+
     return new Promise((resolve, reject) => {
+      let resolved = false
+
+      const cleanup = (err?: Error) => {
+        if (resolved) return
+        resolved = true
+        if (err) {
+          fs.unlink(destPath, () => {})
+          reject(err)
+        } else {
+          resolve()
+        }
+      }
+
       const followRedirect = (currentUrl: string, redirectCount = 0): void => {
+        if (resolved) return
+
         if (redirectCount > 5) {
-          reject(new Error('Too many redirects'))
+          cleanup(new Error('Too many redirects'))
           return
         }
 
         const protocol = currentUrl.startsWith('https') ? https : http
-        protocol
-          .get(currentUrl, (response) => {
-            // Handle redirects
-            if (
-              response.statusCode &&
-              response.statusCode >= 300 &&
-              response.statusCode < 400 &&
-              response.headers.location
-            ) {
-              followRedirect(response.headers.location, redirectCount + 1)
-              return
-            }
+        const req = protocol.get(currentUrl, { timeout: DOWNLOAD_TIMEOUT_MS }, (response) => {
+          // Handle redirects
+          if (
+            response.statusCode &&
+            response.statusCode >= 300 &&
+            response.statusCode < 400 &&
+            response.headers.location
+          ) {
+            followRedirect(response.headers.location, redirectCount + 1)
+            return
+          }
 
-            if (response.statusCode !== 200) {
-              reject(new Error(`Failed to download: HTTP ${response.statusCode}`))
-              return
-            }
+          if (response.statusCode !== 200) {
+            cleanup(new Error(`Failed to download: HTTP ${response.statusCode}`))
+            return
+          }
 
-            const totalBytes = parseInt(response.headers['content-length'] || '0', 10)
-            let downloadedBytes = 0
+          const totalBytes = parseInt(response.headers['content-length'] || '0', 10)
+          let downloadedBytes = 0
 
-            const file = createWriteStream(destPath)
+          const file = createWriteStream(destPath)
 
-            response.on('data', (chunk: Buffer) => {
-              downloadedBytes += chunk.length
-              const percent = totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0
-              this.emit('download-progress', {
-                binary: name,
-                percent,
-                downloadedBytes,
-                totalBytes,
-              } as DownloadProgress)
-            })
+          response.on('data', (chunk: Buffer) => {
+            downloadedBytes += chunk.length
+            const percent = totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0
+            this.emit('download-progress', {
+              binary: name,
+              percent,
+              downloadedBytes,
+              totalBytes,
+            } as DownloadProgress)
+          })
 
-            response.pipe(file)
+          // Handle errors on response stream (connection drops, etc.)
+          response.on('error', (err) => {
+            file.destroy()
+            cleanup(err)
+          })
 
-            file.on('finish', () => {
-              file.close()
-              resolve()
-            })
+          response.pipe(file)
 
-            file.on('error', (err) => {
-              fs.unlink(destPath, () => {})
-              reject(err)
+          file.on('finish', () => {
+            file.close(() => {
+              // Verify download completed successfully
+              if (totalBytes > 0 && downloadedBytes < totalBytes) {
+                cleanup(new Error(`Download incomplete: got ${downloadedBytes} of ${totalBytes} bytes`))
+                return
+              }
+              cleanup()
             })
           })
-          .on('error', reject)
+
+          file.on('error', (err) => {
+            cleanup(err)
+          })
+        })
+
+        req.on('error', (err) => {
+          cleanup(err)
+        })
+
+        req.on('timeout', () => {
+          req.destroy()
+          cleanup(new Error(`Download timed out after ${DOWNLOAD_TIMEOUT_MS / 1000} seconds`))
+        })
       }
 
       followRedirect(url)
@@ -540,25 +575,36 @@ class BinaryManager extends EventEmitter {
   }
 
   async downloadAllBinaries(onProgress?: (progress: DownloadProgress) => void): Promise<void> {
-    const status = await this.checkBinaryStatus()
-
-    if (onProgress) {
-      this.on('download-progress', onProgress)
+    // Prevent concurrent downloads - if one is in progress, wait for it
+    if (this.downloadInProgress) {
+      return this.downloadInProgress
     }
 
-    try {
-      if (!status.ytdlp.exists || !status.ytdlp.executable) {
-        await this.downloadBinary('yt-dlp')
-      }
+    const doDownload = async (): Promise<void> => {
+      const status = await this.checkBinaryStatus()
 
-      if (!status.deno.exists || !status.deno.executable) {
-        await this.downloadBinary('deno')
-      }
-    } finally {
       if (onProgress) {
-        this.removeListener('download-progress', onProgress)
+        this.on('download-progress', onProgress)
+      }
+
+      try {
+        if (!status.ytdlp.exists || !status.ytdlp.executable) {
+          await this.downloadBinary('yt-dlp')
+        }
+
+        if (!status.deno.exists || !status.deno.executable) {
+          await this.downloadBinary('deno')
+        }
+      } finally {
+        if (onProgress) {
+          this.removeListener('download-progress', onProgress)
+        }
+        this.downloadInProgress = null
       }
     }
+
+    this.downloadInProgress = doDownload()
+    return this.downloadInProgress
   }
 
   async checkForYtDlpUpdate(): Promise<{
@@ -672,16 +718,14 @@ class BinaryManager extends EventEmitter {
     const binaryExists = fs.existsSync(binaryPath)
 
     if (!binaryExists) {
-      // Try to download only on Windows (where pre-built binaries are available)
-      if (process.platform === 'win32') {
+      // Try to download on Windows and Linux (where pre-built binaries are available)
+      if (process.platform === 'win32' || process.platform === 'linux') {
         await this.downloadBinary('whisper')
       } else {
-        // On macOS/Linux, provide helpful error message
-        const installInstructions =
-          process.platform === 'darwin'
-            ? 'Install whisper-cpp via Homebrew: brew install whisper-cpp'
-            : 'Install whisper-cpp via your package manager or build from source: https://github.com/ggerganov/whisper.cpp'
-        throw new Error(`Whisper binary not found. ${installInstructions}`)
+        // On macOS, use system-installed whisper-cpp (via Homebrew)
+        throw new Error(
+          'Whisper binary not found. Install whisper-cpp via Homebrew: brew install whisper-cpp'
+        )
       }
     }
 
