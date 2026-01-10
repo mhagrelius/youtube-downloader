@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import https from 'https'
@@ -6,6 +5,7 @@ import http from 'http'
 import { createWriteStream } from 'fs'
 import { spawn } from 'child_process'
 import { EventEmitter } from 'events'
+import type { PathResolver } from '../../shared/services/paths.js'
 
 export interface BinaryInfo {
   name: string
@@ -122,34 +122,12 @@ const WHISPER_MODEL_URLS: Record<string, string> = {
 
 class BinaryManager extends EventEmitter {
   private binDir: string
+  private pathResolver: PathResolver
 
-  constructor() {
+  constructor(pathResolver: PathResolver) {
     super()
-    // In development, use resources/bin. In production, use userData/bin
-    const isDev = !app.isPackaged
-
-    if (isDev) {
-      // Try multiple possible locations for dev binaries
-      const possibleDevPaths = [
-        path.join(process.cwd(), 'resources', 'bin'),
-        // When running from dist-electron, go up one level
-        path.join(app.getAppPath(), '..', 'resources', 'bin'),
-        // Fallback to app path based resolution
-        path.join(path.dirname(app.getAppPath()), 'resources', 'bin'),
-      ]
-
-      // Find the first path that exists
-      let foundPath = possibleDevPaths[0]
-      for (const devPath of possibleDevPaths) {
-        if (fs.existsSync(devPath)) {
-          foundPath = devPath
-          break
-        }
-      }
-      this.binDir = foundPath
-    } else {
-      this.binDir = path.join(app.getPath('userData'), 'bin')
-    }
+    this.pathResolver = pathResolver
+    this.binDir = pathResolver.getBinDir()
   }
 
   getBinDir(): string {
@@ -243,11 +221,7 @@ class BinaryManager extends EventEmitter {
   }
 
   getModelsDir(): string {
-    const isDev = !app.isPackaged
-    if (isDev) {
-      return path.join(process.cwd(), 'resources', 'models')
-    }
-    return path.join(app.getPath('userData'), 'models')
+    return this.pathResolver.getModelsDir()
   }
 
   getWhisperModelPath(modelName: string = 'small'): string {
@@ -540,7 +514,9 @@ class BinaryManager extends EventEmitter {
     // FFmpeg ZIP from BtbN has structure: ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe
     // Find the extracted directory and move binaries to binDir
     const entries = fs.readdirSync(this.binDir)
-    const ffmpegDir = entries.find((e) => e.startsWith('ffmpeg-') && fs.statSync(path.join(this.binDir, e)).isDirectory())
+    const ffmpegDir = entries.find(
+      (e) => e.startsWith('ffmpeg-') && fs.statSync(path.join(this.binDir, e)).isDirectory()
+    )
 
     if (ffmpegDir) {
       const binPath = path.join(this.binDir, ffmpegDir, 'bin')
@@ -722,14 +698,18 @@ class BinaryManager extends EventEmitter {
   }
 }
 
-// Singleton instance
-let binaryManagerInstance: BinaryManager | null = null
-
-export function getBinaryManager(): BinaryManager {
-  if (!binaryManagerInstance) {
-    binaryManagerInstance = new BinaryManager()
-  }
-  return binaryManagerInstance
+/**
+ * Create a BinaryManager instance with a path resolver.
+ *
+ * @example
+ * // In Electron main.ts
+ * const binaryManager = createBinaryManager(getElectronPathResolver())
+ *
+ * // In CLI code
+ * const binaryManager = createBinaryManager(getCliPathResolver())
+ */
+export function createBinaryManager(pathResolver: PathResolver): BinaryManager {
+  return new BinaryManager(pathResolver)
 }
 
 export { BinaryManager }

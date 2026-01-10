@@ -6,20 +6,27 @@ import { registerSettingsIPC } from './ipc/settings.ipc'
 import { registerBinaryIPC } from './ipc/binary.ipc'
 import { registerTranscriptionIPC } from './ipc/transcription.ipc'
 import { getDatabase, closeDatabase } from './services/database.service'
+import { createBinaryManager } from './services/binary-manager.service'
+import { getElectronPathResolver } from './services/electron-paths'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 let mainWindow: BrowserWindow | null = null
 
-// Initialize database
-getDatabase()
+function initializeApp() {
+  // Create binary manager with Electron paths
+  const binaryManager = createBinaryManager(getElectronPathResolver())
 
-// Register IPC handlers
-registerDownloadIPC()
-registerSettingsIPC()
-registerBinaryIPC()
-registerTranscriptionIPC()
+  // Initialize database
+  getDatabase()
+
+  // Register IPC handlers with shared binary manager
+  registerDownloadIPC(binaryManager)
+  registerSettingsIPC()
+  registerBinaryIPC(binaryManager)
+  registerTranscriptionIPC(binaryManager)
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -51,7 +58,10 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  initializeApp()
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -2,7 +2,7 @@ import { spawn, ChildProcess } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import { EventEmitter } from 'events'
-import { getBinaryManager } from './binary-manager.service'
+import { BinaryManager } from './binary-manager.service'
 import type {
   VideoFormat,
   VideoInfo,
@@ -22,14 +22,6 @@ export type {
   DownloadOptions,
   DownloadProgress,
   PartialVideoInfo,
-}
-
-function getYtDlpPath(): string {
-  return getBinaryManager().getYtDlpPath()
-}
-
-function getDenoPath(): string {
-  return getBinaryManager().getDenoPath()
 }
 
 function extractVideoId(url: string): string | null {
@@ -80,10 +72,10 @@ export async function getVideoPreview(url: string): Promise<PartialVideoInfo> {
   }
 }
 
-export async function getVideoInfo(url: string): Promise<VideoInfo> {
+export async function getVideoInfo(url: string, binaryManager: BinaryManager): Promise<VideoInfo> {
   return new Promise((resolve, reject) => {
-    const ytdlpPath = getYtDlpPath()
-    const denoPath = getDenoPath()
+    const ytdlpPath = binaryManager.getYtDlpPath()
+    const denoPath = binaryManager.getDenoPath()
 
     const args = ['--dump-json', '--no-playlist', url]
 
@@ -152,10 +144,13 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
   })
 }
 
-export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
+export async function getPlaylistInfo(
+  url: string,
+  binaryManager: BinaryManager
+): Promise<PlaylistInfo> {
   return new Promise((resolve, reject) => {
-    const ytdlpPath = getYtDlpPath()
-    const denoPath = getDenoPath()
+    const ytdlpPath = binaryManager.getYtDlpPath()
+    const denoPath = binaryManager.getDenoPath()
 
     const args = ['--dump-single-json', '--flat-playlist', url]
 
@@ -221,11 +216,17 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
 export class Downloader extends EventEmitter {
   private process: ChildProcess | null = null
   private isPaused = false
+  private binaryManager: BinaryManager
+
+  constructor(binaryManager: BinaryManager) {
+    super()
+    this.binaryManager = binaryManager
+  }
 
   async download(options: DownloadOptions): Promise<string> {
     return new Promise((resolve, reject) => {
-      const ytdlpPath = getYtDlpPath()
-      const denoPath = getDenoPath()
+      const ytdlpPath = this.binaryManager.getYtDlpPath()
+      const denoPath = this.binaryManager.getDenoPath()
 
       // Ensure output directory exists (for playlist subfolders)
       if (!fs.existsSync(options.outputPath)) {
@@ -408,7 +409,7 @@ export class Downloader extends EventEmitter {
   }
 }
 
-// Export singleton-like functions for simple usage
-export function createDownloader(): Downloader {
-  return new Downloader()
+// Factory function for creating Downloader instances
+export function createDownloader(binaryManager: BinaryManager): Downloader {
+  return new Downloader(binaryManager)
 }

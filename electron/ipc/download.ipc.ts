@@ -6,6 +6,7 @@ import {
   createDownloader,
   Downloader,
 } from '../services/ytdlp.service'
+import { BinaryManager } from '../services/binary-manager.service'
 import type { DownloadOptions, DownloadProgress } from '../../shared/types'
 import { getSetting } from '../services/settings.service'
 import { ipcHandler, isPathWithinAllowed, getSafePaths } from '../utils/ipc-handler'
@@ -24,7 +25,7 @@ function cleanupDownloadsForWindow(windowId: number): void {
   }
 }
 
-export function registerDownloadIPC(): void {
+export function registerDownloadIPC(binaryManager: BinaryManager): void {
   // Register window cleanup on close
   app.on('browser-window-created', (_event, window) => {
     window.on('closed', () => {
@@ -35,7 +36,7 @@ export function registerDownloadIPC(): void {
   // Get video info from URL
   ipcMain.handle(
     'ytdlp:getVideoInfo',
-    ipcHandler(async (_event: unknown, url: string) => getVideoInfo(url), {
+    ipcHandler(async (_event: unknown, url: string) => getVideoInfo(url, binaryManager), {
       channel: 'ytdlp:getVideoInfo',
     })
   )
@@ -51,7 +52,7 @@ export function registerDownloadIPC(): void {
   // Get playlist info from URL
   ipcMain.handle(
     'ytdlp:getPlaylistInfo',
-    ipcHandler(async (_event: unknown, url: string) => getPlaylistInfo(url), {
+    ipcHandler(async (_event: unknown, url: string) => getPlaylistInfo(url, binaryManager), {
       channel: 'ytdlp:getPlaylistInfo',
     })
   )
@@ -66,7 +67,7 @@ export function registerDownloadIPC(): void {
         audioQuality: options.audioQuality || getSetting('audioQuality'),
       }
 
-      const downloader = createDownloader()
+      const downloader = createDownloader(binaryManager)
       const window = BrowserWindow.fromWebContents(event.sender)
       const windowId = window?.id ?? -1
 
