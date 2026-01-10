@@ -1,5 +1,4 @@
-import type { DownloadProgress } from '../../shared/types.js'
-import type { TranscriptionProgress } from '../../electron/services/transcription.service.js'
+import type { DownloadProgress, TranscriptionProgress } from '../../shared/types.js'
 
 export interface ProgressOptions {
   quiet: boolean
