@@ -25,12 +25,13 @@ describe('CliPathResolver', () => {
     })
 
     it('should respect YT_TRANSCRIBE_DATA_DIR environment variable', async () => {
-      process.env.YT_TRANSCRIBE_DATA_DIR = '/custom/data/dir'
+      const customDataDir = path.join(os.tmpdir(), 'custom-data-dir')
+      process.env.YT_TRANSCRIBE_DATA_DIR = customDataDir
 
       const { CliPathResolver } = await import('../../../cli/utils/paths')
       const resolver = new CliPathResolver()
 
-      expect(resolver.getBinDir()).toBe('/custom/data/dir/bin')
+      expect(resolver.getBinDir()).toBe(path.join(customDataDir, 'bin'))
     })
   })
 
@@ -46,12 +47,13 @@ describe('CliPathResolver', () => {
     })
 
     it('should respect YT_TRANSCRIBE_DATA_DIR environment variable', async () => {
-      process.env.YT_TRANSCRIBE_DATA_DIR = '/custom/data/dir'
+      const customDataDir = path.join(os.tmpdir(), 'custom-data-dir')
+      process.env.YT_TRANSCRIBE_DATA_DIR = customDataDir
 
       const { CliPathResolver } = await import('../../../cli/utils/paths')
       const resolver = new CliPathResolver()
 
-      expect(resolver.getModelsDir()).toBe('/custom/data/dir/models')
+      expect(resolver.getModelsDir()).toBe(path.join(customDataDir, 'models'))
     })
   })
 
@@ -66,12 +68,13 @@ describe('CliPathResolver', () => {
     })
 
     it('should respect YT_TRANSCRIBE_OUTPUT_DIR environment variable', async () => {
-      process.env.YT_TRANSCRIBE_OUTPUT_DIR = '/custom/output'
+      const customOutput = path.join(os.tmpdir(), 'custom-output')
+      process.env.YT_TRANSCRIBE_OUTPUT_DIR = customOutput
 
       const { CliPathResolver } = await import('../../../cli/utils/paths')
       const resolver = new CliPathResolver()
 
-      expect(resolver.getDefaultDownloadPath()).toBe('/custom/output')
+      expect(resolver.getDefaultDownloadPath()).toBe(customOutput)
     })
   })
 
