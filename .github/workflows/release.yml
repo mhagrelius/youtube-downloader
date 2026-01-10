@@ -110,7 +110,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build:mac
+        run: npm run build:assets && npx electron-builder --mac -p never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
@@ -141,7 +141,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build:linux
+        run: npm run build:assets && npx electron-builder --linux -p never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -170,7 +170,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build:win
+        run: npm run build:assets && npx electron-builder --win -p never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
