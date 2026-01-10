@@ -89,8 +89,7 @@ const BINARY_URLS: Record<string, Record<PlatformKey, Record<ArchKey, string>>> 
         'https://github.com/ggerganov/whisper.cpp/releases/latest/download/whisper-bin-x64.zip',
     },
     linux: {
-      // No pre-built binaries for Linux - use system-installed whisper-cpp
-      x64: '',
+      x64: 'https://github.com/mhagrelius/youtube-downloader/releases/download/whisper-v1.8.2/whisper-linux-x64.zip',
       arm64: '',
     },
   },
@@ -719,16 +718,14 @@ class BinaryManager extends EventEmitter {
     const binaryExists = fs.existsSync(binaryPath)
 
     if (!binaryExists) {
-      // Try to download only on Windows (where pre-built binaries are available)
-      if (process.platform === 'win32') {
+      // Try to download on Windows and Linux (where pre-built binaries are available)
+      if (process.platform === 'win32' || process.platform === 'linux') {
         await this.downloadBinary('whisper')
       } else {
-        // On macOS/Linux, provide helpful error message
-        const installInstructions =
-          process.platform === 'darwin'
-            ? 'Install whisper-cpp via Homebrew: brew install whisper-cpp'
-            : 'Install whisper-cpp via your package manager or build from source: https://github.com/ggerganov/whisper.cpp'
-        throw new Error(`Whisper binary not found. ${installInstructions}`)
+        // On macOS, use system-installed whisper-cpp (via Homebrew)
+        throw new Error(
+          'Whisper binary not found. Install whisper-cpp via Homebrew: brew install whisper-cpp'
+        )
       }
     }
 
