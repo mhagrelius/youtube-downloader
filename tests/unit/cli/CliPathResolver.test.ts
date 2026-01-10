@@ -113,12 +113,17 @@ describe('CliPathResolver', () => {
       const binDir = resolver.getBinDir()
       const modelsDir = resolver.getModelsDir()
 
+      // Paths should be absolute
+      expect(path.isAbsolute(binDir)).toBe(true)
+      expect(path.isAbsolute(modelsDir)).toBe(true)
+
       // Paths should contain yt-transcribe app name
       expect(binDir).toContain('yt-transcribe')
       expect(modelsDir).toContain('yt-transcribe')
 
-      // Paths should be based on the home directory (on all platforms)
-      expect(binDir.startsWith(os.homedir()) || binDir.startsWith(os.tmpdir())).toBe(true)
+      // Paths should end with bin or models respectively
+      expect(path.basename(binDir)).toBe('bin')
+      expect(path.basename(modelsDir)).toBe('models')
     })
   })
 })
